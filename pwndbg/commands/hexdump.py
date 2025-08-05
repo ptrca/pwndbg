@@ -31,9 +31,7 @@ pwndbg.config.add_param(
     "hexdump-limit-mb",
     10,
     "the maximum size in megabytes (MB) `hexdump` will read",
-    help_docstring="""Set the maximum size in megabytes (MB) that the `hexdump` command will attempt to read at once.
-    Prevents GDB crashes due to excessive memory allocation requests.
-    Set to 0 for unlimited (use with caution).""",
+    help_docstring='"Set the maximum size in megabytes (MB) that the `hexdump` command will attempt to read at once.\n    Prevents GDB crashes due to excessive memory allocation requests.\n    Set to 0 for unlimited (use with caution)."',
     param_class=PARAM_ZUINTEGER,
 )
 
@@ -66,15 +64,51 @@ parser.add_argument(
 parser.add_argument(
     "count", nargs="?", default=pwndbg.config.hexdump_bytes, help="Number of bytes to dump"
 )
+group = parser.add_mutually_exclusive_group()
+group.add_argument(
+    "-1",
+    "--byte",
+    dest="group_width",
+    action="store_const",
+    const=1,
+    help="Hexdump in bytes (1 byte).",
+)
+group.add_argument(
+    "-2",
+    "--word",
+    dest="group_width",
+    action="store_const",
+    const=2,
+    help="Hexdump in words (2 bytes).",
+)
+group.add_argument(
+    "-4",
+    "--dword",
+    dest="group_width",
+    action="store_const",
+    const=4,
+    help="Hexdump in dwords (4 bytes).",
+)
+group.add_argument(
+    "-8",
+    "--qword",
+    dest="group_width",
+    action="store_const",
+    const=8,
+    help="Hexdump in qwords (8 bytes).",
+)
 
 
 @pwndbg.commands.Command(parser, category=CommandCategory.MEMORY)
 @pwndbg.commands.OnlyWhenRunning
-def hexdump(address, count=pwndbg.config.hexdump_bytes) -> None:
+def hexdump(address, count=pwndbg.config.hexdump_bytes, group_width=None) -> None:
     if hexdump.repeat:
         address = hexdump.last_address
+        group_width = hexdump.last_group_width
     else:
         hexdump.offset = 0
+
+    hexdump.last_group_width = group_width
 
     address = int(address)
     if address > pwndbg.aglib.arch.ptrmask:
@@ -107,8 +141,9 @@ def hexdump(address, count=pwndbg.config.hexdump_bytes) -> None:
 
     width = int(pwndbg.config.hexdump_width)
 
-    group_width = int(pwndbg.config.hexdump_group_width)
-    group_width = pwndbg.aglib.typeinfo.ptrsize if group_width == -1 else group_width
+    if group_width is None:
+        group_width = int(pwndbg.config.hexdump_group_width)
+        group_width = pwndbg.aglib.typeinfo.ptrsize if group_width == -1 else group_width
 
     # TODO: What if arch endian is big, and use_big_endian is false?
     flip_group_endianness = (
@@ -146,3 +181,4 @@ def hexdump(address, count=pwndbg.config.hexdump_bytes) -> None:
 
 hexdump.last_address = 0
 hexdump.offset = 0
+hexdump.last_group_width = None
