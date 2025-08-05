@@ -144,7 +144,7 @@ def hexdump(
                     hex_group.append(color_scheme[char])
                 groups.append("".join(hex_group))
             hexline.append(sep.join(groups))
-            hexline.append(" ")
+            hexline.append("  ")
 
             hexline.append(config_separator_str)
             for group in groupby(group_width, line):
