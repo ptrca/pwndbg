@@ -135,15 +135,16 @@ def hexdump(
                 H.address(f"{address + increment:#08x}  "),
             ]
 
+            sep = "\t" if group_width == 8 else " "
+            groups = []
             for group in groupby(group_width, line):
                 group = reversed(group) if flip_group_endianness else group
-                for idx, char in enumerate(group):
-                    if flip_group_endianness and idx == group_width - 1:
-                        hexline.append(H.highlight_group_lsb(color_scheme[char]))
-                    else:
-                        hexline.append(color_scheme[char])
-                    hexline.append(config_byte_separator_str)
-                hexline.append(" ")
+                hex_group =[]
+                for char in group:
+                    hex_group.append(color_scheme[char])
+                groups.append("".join(hex_group))
+            hexline.append(sep.join(groups))
+            hexline.append(" ")
 
             hexline.append(config_separator_str)
             for group in groupby(group_width, line):
